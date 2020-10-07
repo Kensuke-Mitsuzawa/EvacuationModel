@@ -110,6 +110,7 @@ cars-own [       ; the variables that cars own
   decision       ; the agents decision code: 2 for Hor Evac by Car
                  ;                           4 for Ver Evac by Car
   car_ahead      ; the car that is immediately ahead of the agent
+  ahead_car_closeness  ; TODO COMMENT LEFT
   space_hw       ; the space headway between the agent and 'car_ahead'
   speed_diff     ; the speed difference between the agent and 'car_ahead'
   acc            ; acceleration of the car agent
@@ -292,15 +293,16 @@ to move-gm
   ifelse is-turtle? car_ahead [                                                              ; if there IS a car ahead:
     set space_hw distance car_ahead                                                          ; the space headway with the leading car
     set speed_diff [speed] of car_ahead - speed                                              ; the speed difference with the leadning car
-    ifelse space_hw < (6 / patch_to_feet) [set speed 0]                                      ; if the leading car is less than ~6ft away, stop
+    set ahead_car_closeness 6 / patch_to_feet
+    ifelse space_hw < ahead_car_closeness [set speed 0]                                      ; if the leading car is less than ~6ft away, stop
     [                                                                                        ; otherwise, find the acceleration based on the general motors car-following model
       set acc (alpha / fd_to_mph * 5280 / patch_to_feet) * ((speed) ^ 0) / ((space_hw) ^ 2) * speed_diff
                                                                                              ; converting mi2/hr to patch2/tick = converting mph*mi to fd*patch
                                                                                              ; m = speed componnent = 0 / l = space headway component = 2
       set speed speed + acc                                                                  ; update the speed
     ]
-    if speed > (space_hw - (6 / patch_to_feet)) [                                            ; if the current speed will put the car less than 6ft away from the leading car in the next second,
-      set speed min list (space_hw - (6 / patch_to_feet)) [speed] of car_ahead               ; reduce the speed in a way to not get closer to the leading car
+    if speed > (space_hw - (ahead_car_closeness)) [                                            ; if the current speed will put the car less than 6ft away from the leading car in the next second,
+      set speed min list (space_hw - (ahead_car_closeness)) [speed] of car_ahead               ; reduce the speed in a way to not get closer to the leading car
     ]
     if speed > (max_speed / fd_to_mph) [set speed (max_speed / fd_to_mph)]                   ; cap the speed to max speed if larger
     if speed < 0 [set speed 0]                                                               ; no negative speed
@@ -686,6 +688,7 @@ to load-routes
     set goals intersections with [shelter?]
     set ver-path Astar self (min-one-of goals [distance myself]) goals ; ver-path can go to either a vertical shelter or
                                                                        ; a horizontal shelter, depending on which one was closer
+    output-show "One Calculated"
   ]
   output-print "Routes Calculated"
 end
@@ -774,11 +777,9 @@ to go
 
   ; ask residents, if they milling time has passed, to start moving
   ask residents with [not evacuated? and not moving? and not dead? and miltime <= ticks][
-    ;; show evacuated?
-    ;; show list xcor ycor
-    ;; output-show [(word "(" xcor ", " ycor ")")] of init_dest
     set heading towards init_dest
     set moving? true
+    ;; output-show "Start moving"
   ]
   ; ask residents that should be moving to move
   ask residents with [moving?][
@@ -788,6 +789,7 @@ to go
       set moving? false
       set reached? true
       set current_int init_dest
+      ;; output-show "Reached at init dest"
     ]
   ]
   ; check the residnet that are on the way if they have been caught by the tsunami
@@ -800,6 +802,7 @@ to go
     let dcsn decision            ; to pass on the decision from the resident to either car or pedestrian
     if dcsn = 1 or dcsn = 3 [    ; horizontal (1) or vertical (3) evacuation - by FOOT
       ask current_int [          ; ask the current intersection of the resident to hatch a pedestrian
+        ;; output-show "Resident into Pedesrian"
         hatch-pedestrians 1 [
           set size 2
           set shape "dot"
@@ -834,6 +837,7 @@ to go
     ]
     if dcsn = 2 or dcsn = 4 [   ; horizontal (2) or vertical (4) evacuation - by CAR
       ask current_int [         ; ask the current intersection of the resident to hatch a car
+        ;; output-show "Resident into Car"
         hatch-cars 1 [
           set size 2
           set current_int myself ; myself = current_int of the resident
@@ -879,6 +883,7 @@ to go
     set heading towards next_int            ; set the heading towards the destination
     set moving? true
     ask road ([who] of current_int) ([who] of next_int)[set crowd crowd + 1] ; add the crowd of the road the pedestrian will be on
+    ;; output-show "Pedestrian Ready to move."
   ]
   ; move the pedestrians that should move
   ask pedestrians with [moving?][
@@ -907,10 +912,12 @@ to go
     set heading towards next_int            ; set the heading towards the destination
     set moving? true
     ask road ([who] of current_int) ([who] of next_int)[set traffic traffic + 1] ; add the traffic of the road the car will be on
+    ;; output-show "Car Ready to move."
   ]
   ; move the cars that should move
   ask cars with [moving?][
     move-gm                 ; set the speed with general motors car-following model
+    ;; output-show speed
     fd speed                ; move
     if (distance next_int < 0.005 ) [    ; if close enough check if evacuated? dead? if neither, get ready for the next step
       set moving? false
@@ -1485,12 +1492,12 @@ Tc
 Number
 
 INPUTBOX
-1390
-17
-1707
-77
+1382
+10
+1507
+70
 path_dataset_dir
-default-dataset
+production
 1
 0
 String
