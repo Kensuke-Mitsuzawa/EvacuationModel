@@ -157,6 +157,8 @@ globals [        ; global variables
 
   min_lon        ; minimum longitude that is associated with min_xcor
   min_lat        ; minimum latitude that is associated with min_ycor
+
+  path_dataset_dir	; path to data directory
 ]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
