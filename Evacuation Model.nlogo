@@ -989,7 +989,7 @@ SWITCH
 46
 immediate_evacuation
 immediate_evacuation
-1
+0
 1
 -1000
 
