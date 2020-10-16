@@ -157,6 +157,12 @@ globals [        ; global variables
 
   min_lon        ; minimum longitude that is associated with min_xcor
   min_lat        ; minimum latitude that is associated with min_ycor
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;; Envelope ;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  world_envelope
+  netlogo_envelope
 ]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -390,11 +396,11 @@ to read-gis-files
   set road_network gis:load-dataset word path_dataset_dir "/road_network/road_network.shp"                                   ; read road network
   set population_distribution gis:load-dataset word path_dataset_dir "/population_distribution/population_distribution.shp"  ; read population distribution
 
-  let world_envelope (gis:envelope-union-of (gis:envelope-of road_network)                                ; set the real world bounding box the union of all the read shapefiles
+  set world_envelope (gis:envelope-union-of (gis:envelope-of road_network)                                ; set the real world bounding box the union of all the read shapefiles
                                             (gis:envelope-of shelter_locations)
                                             (gis:envelope-of population_distribution)) ; just a sample inunudation wavefield to get the envelope (TODO: can be fixed later)
 
-  let netlogo_envelope (list (min-pxcor + 1) (max-pxcor - 1) (min-pycor + 1) (max-pycor - 1))             ; read the size of netlogo world
+  set netlogo_envelope (list (min-pxcor + 1) (max-pxcor - 1) (min-pycor + 1) (max-pycor - 1))             ; read the size of netlogo world
   gis:set-transformation (world_envelope) (netlogo_envelope)                                              ; make the transformation from real world to netlogo world
   let world_width item 1 world_envelope - item 0 world_envelope                                           ; real world width in meters
   let world_height item 3 world_envelope - item 2 world_envelope                                          ; real world height in meters
